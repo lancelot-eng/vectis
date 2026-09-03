@@ -13,7 +13,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
 
-    # S'assurer que le dossier instance existe (contient le fichier SQLite)
     os.makedirs(os.path.join(app.root_path, '..', 'instance'), exist_ok=True)
 
     db.init_app(app)
@@ -41,19 +40,19 @@ def create_app():
     app.register_blueprint(tickets_bp)
     app.register_blueprint(admin_bp)
 
-    # En-têtes de sécurité appliqués à toutes les réponses
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        # CSP simple : autorise seulement le nécessaire (ajuster si polices/CDN externes utilisés)
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src https://fonts.gstatic.com; "
             "img-src 'self' data:; "
-            "script-src 'self';"
+            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
+            "frame-src https://challenges.cloudflare.com; "
+            "connect-src 'self' https://challenges.cloudflare.com;"
         )
         return response
 
