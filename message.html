@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }} — Vectis</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+  <div style="max-width:440px; text-align:center;">
+    <div style="font-size:2.4rem; margin-bottom:20px;">{{ '✓' if success else '✕' }}</div>
+    <h1 style="font-size:1.6rem; margin-bottom:14px;">{{ title }}</h1>
+    <p style="color:var(--text-dim); line-height:1.6; margin-bottom:32px;">{{ text }}</p>
+    <a href="/" class="btn-primary" style="display:inline-block; text-decoration:none; padding:12px 28px;">Retour à l'accueil</a>
+  </div>
+</div>
+</body>
+</html>

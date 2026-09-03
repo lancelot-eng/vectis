@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — Vectis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+<header>
+  <div class="logo-block" onclick="window.location.href='/'">
+    <div class="logo-mark">
+      <svg viewBox="0 0 34 34" fill="none">
+        <path d="M4 6 L17 4 L30 6 L28 20 L17 30 L6 20 Z" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+        <path d="M12 16 L15.5 20 L23 11" stroke="var(--signal)" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/>
+      </svg>
+    </div>
+    <div class="logo-text">vect<span class="cursor-blink">i</span>s</div>
+  </div>
+  <nav>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+    </div>
+    <div class="nav-actions">
+      <span class="mono" id="navUsername" style="font-size:0.85rem; color:var(--text-dim);"></span>
+      <button class="btn-primary" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </nav>
+</header>
+
+<div class="support-shell">
+
+  <aside class="tickets-sidebar" id="ticketsSidebar">
+    <div class="sidebar-header">
+      <div class="new-ticket-wrap">
+        <button class="btn-new-ticket" onclick="toggleCategoryDropdown()">
+          + Nouvelle conversation
+        </button>
+        <div class="category-dropdown" id="categoryDropdown">
+          {% for cat in categories %}
+          <div class="category-option" onclick="startNewTicket('{{ cat }}')">{{ cat }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label" id="isModView" style="display:none;">Tous les tickets (vue équipe)</div>
+    <div class="sidebar-section-label" id="isUserView">Mes conversations</div>
+    <div class="ticket-list" id="ticketList">
+      <div class="empty-list-msg">Chargement…</div>
+    </div>
+  </aside>
+
+  <section class="conversation-panel" id="conversationPanel">
+    <div class="conv-empty" id="convEmptyState">
+      <div style="font-size:2rem;">💬</div>
+      <div>Sélectionnez une conversation ou créez-en une nouvelle.</div>
+    </div>
+
+    <!-- New ticket form -->
+    <div id="newTicketForm" style="display:none; padding:32px; max-width:560px;">
+      <h2 style="font-size:1.3rem; margin-bottom:6px;">Nouvelle conversation</h2>
+      <div style="color:var(--text-faint); font-size:0.85rem; margin-bottom:24px;" id="newTicketCategoryLabel"></div>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Sujet</label>
+        <input type="text" id="newTicketSubject" placeholder="Résumez votre demande en quelques mots">
+      </div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>Message</label>
+        <textarea id="newTicketMessage" rows="6" style="width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:12px 14px; font-family:'Inter',sans-serif; font-size:0.9rem; clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%); resize:vertical;" placeholder="Décrivez votre problème en détail…"></textarea>
+      </div>
+      <div class="form-error" id="newTicketError"></div>
+      <button class="modal-submit" style="width:auto; padding:12px 28px;" onclick="submitNewTicket()">Envoyer</button>
+    </div>
+
+    <!-- Existing conversation -->
+    <div id="existingConversation" style="display:none; flex-direction:column; height:100%;">
+      <div class="conv-header">
+        <div>
+          <h2 id="convSubject"></h2>
+          <div class="conv-meta" id="convMeta"></div>
+        </div>
+        <div class="status-chip" id="convStatusToggle" onclick="toggleTicketStatus()" title="Marquer résolu / rouvrir">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+      <div class="conv-messages" id="convMessages"></div>
+      <div class="conv-input-row">
+        <textarea id="replyInput" rows="1" placeholder="Écrire une réponse…"></textarea>
+        <button class="conv-send-btn" onclick="sendReply()">Envoyer</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<style>
+.form-error {
+  display: none; font-size: 0.82rem; color: var(--alert);
+  background: color-mix(in srgb, var(--alert) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--alert) 30%, transparent);
+  padding: 10px 12px; margin-bottom: 14px;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+.form-error.active { display: block; }
+.field label { display:block; font-size:0.78rem; color:var(--text-dim); margin-bottom:6px; font-weight:500; }
+.field input { width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:11px 14px; font-size:0.9rem; font-family:'Inter',sans-serif; clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%); }
+.field input:focus { outline:none; border-color:var(--accent); }
+</style>
+
+<script>
+let currentUser = null;
+let currentTicketId = null;
+let allTickets = [];
+let selectedCategory = null;
+
+async function init() {
+  const res = await fetch('/api/me');
+  const data = await res.json();
+  if (!data.authenticated) {
+    window.location.href = '/';
+    return;
+  }
+  currentUser = data;
+  document.getElementById('navUsername').textContent = '@' + data.username;
+
+  const isMod = (data.role === 'admin' || data.role === 'moderator');
+  document.getElementById('isModView').style.display = isMod ? 'block' : 'none';
+  document.getElementById('isUserView').style.display = isMod ? 'none' : 'block';
+
+  await loadTickets();
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+
+function toggleCategoryDropdown() {
+  document.getElementById('categoryDropdown').classList.toggle('active');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.new-ticket-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('categoryDropdown').classList.remove('active');
+  }
+});
+
+function startNewTicket(category) {
+  selectedCategory = category;
+  document.getElementById('categoryDropdown').classList.remove('active');
+  currentTicketId = null;
+
+  document.querySelectorAll('.ticket-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('convEmptyState').style.display = 'none';
+  document.getElementById('existingConversation').style.display = 'none';
+  document.getElementById('newTicketForm').style.display = 'block';
+  document.getElementById('newTicketCategoryLabel').textContent = 'Catégorie : ' + category;
+  document.getElementById('newTicketSubject').value = '';
+  document.getElementById('newTicketMessage').value = '';
+  document.getElementById('newTicketError').classList.remove('active');
+}
+
+async function submitNewTicket() {
+  const subject = document.getElementById('newTicketSubject').value.trim();
+  const message = document.getElementById('newTicketMessage').value.trim();
+  const errBox = document.getElementById('newTicketError');
+
+  if (!subject || !message) {
+    errBox.textContent = "Le sujet et le message sont obligatoires.";
+    errBox.classList.add('active');
+    return;
+  }
+
+  const res = await fetch('/api/tickets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subject, category: selectedCategory, message }),
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    errBox.textContent = data.error || "Erreur lors de la création.";
+    errBox.classList.add('active');
+    return;
+  }
+
+  await loadTickets();
+  openTicket(data.id);
+}
+
+async function loadTickets() {
+  const res = await fetch('/api/tickets');
+  allTickets = await res.json();
+  renderTicketList();
+}
+
+function renderTicketList() {
+  const list = document.getElementById('ticketList');
+  if (allTickets.length === 0) {
+    list.innerHTML = '<div class="empty-list-msg">Aucune conversation pour le moment.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  allTickets.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'ticket-item' + (t.id === currentTicketId ? ' selected' : '');
+    item.onclick = () => openTicket(t.id);
+
+    const authorLine = (currentUser.role !== 'user') ? `par @${t.author} · ` : '';
+
+    item.innerHTML = `
+      <div class="ticket-item-top">
+        <div class="ticket-item-subject">${escapeHtml(t.subject)}</div>
+        <div class="status-chip ${t.status === 'resolved' ? 'resolved' : ''}" onclick="event.stopPropagation(); quickToggleStatus(${t.id}, '${t.status}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+      </div>
+      <div class="ticket-item-meta">
+        <span class="ticket-item-cat">${escapeHtml(t.category)}</span>
+        <span>${authorLine}${t.message_count} msg</span>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+async function quickToggleStatus(ticketId, currentStatus) {
+  const newStatus = currentStatus === 'resolved' ? 'open' : 'resolved';
+  await fetch(`/api/tickets/${ticketId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus }),
+  });
+  await loadTickets();
+  if (currentTicketId === ticketId) openTicket(ticketId);
+}
+
+async function toggleTicketStatus() {
+  const ticket = allTickets.find(t => t.id === currentTicketId);
+  if (!ticket) return;
+  await quickToggleStatus(ticket.id, ticket.status);
+}
+
+async function openTicket(ticketId) {
+  currentTicketId = ticketId;
+  document.getElementById('categoryDropdown').classList.remove('active');
+  document.getElementById('convEmptyState').style.display = 'none';
+  document.getElementById('newTicketForm').style.display = 'none';
+  document.getElementById('existingConversation').style.display = 'flex';
+
+  renderTicketList();
+
+  const res = await fetch(`/api/tickets/${ticketId}`);
+  const ticket = await res.json();
+
+  document.getElementById('convSubject').textContent = ticket.subject;
+  document.getElementById('convMeta').textContent =
+    `${ticket.category} · par @${ticket.author} · ${ticket.status === 'resolved' ? 'Résolu' : 'Ouvert'}`;
+
+  const statusChip = document.getElementById('convStatusToggle');
+  statusChip.classList.toggle('resolved', ticket.status === 'resolved');
+
+  const msgBox = document.getElementById('convMessages');
+  msgBox.innerHTML = '';
+  ticket.messages.forEach(m => {
+    const bubble = document.createElement('div');
+    const isOwn = m.author === currentUser.username;
+    const isStaff = m.author_role === 'admin' || m.author_role === 'moderator';
+    bubble.className = 'msg-bubble ' + (isOwn ? 'own' : 'other') + (isStaff && !isOwn ? ' mod-badge' : '');
+    bubble.innerHTML = `<div class="msg-author">${isOwn ? 'Vous' : '@' + escapeHtml(m.author)}</div>${escapeHtml(m.body)}`;
+    msgBox.appendChild(bubble);
+  });
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+async function sendReply() {
+  const input = document.getElementById('replyInput');
+  const body = input.value.trim();
+  if (!body || !currentTicketId) return;
+
+  input.value = '';
+  await fetch(`/api/tickets/${currentTicketId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body }),
+  });
+  await openTicket(currentTicketId);
+  await loadTickets();
+}
+
+document.getElementById('replyInput')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendReply();
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+init();
+</script>
+
+</body>
+</html>

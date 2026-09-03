@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vectis — Sécurité, expliquée simplement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+.form-error {
+  display: none;
+  font-size: 0.82rem;
+  color: var(--alert);
+  background: color-mix(in srgb, var(--alert) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--alert) 30%, transparent);
+  padding: 10px 12px;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+.form-error.active { display: block; }
+.form-success {
+  display: none;
+  font-size: 0.82rem;
+  color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal) 30%, transparent);
+  padding: 10px 12px;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+.form-success.active { display: block; }
+.modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+</head>
+<body>
+</head>
+<body>
+
+<div class="grid-backdrop"></div>
+
+<header>
+  <div class="logo-block" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <div class="logo-mark">
+      <svg viewBox="0 0 34 34" fill="none">
+        <path d="M4 6 L17 4 L30 6 L28 20 L17 30 L6 20 Z" stroke="var(--accent)" stroke-width="1.6" fill="none"/>
+        <path d="M12 16 L15.5 20 L23 11" stroke="var(--signal)" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/>
+      </svg>
+    </div>
+    <div class="logo-text">vect<span class="cursor-blink">i</span>s</div>
+  </div>
+  <nav>
+    <div class="nav-links">
+      <a href="#menaces">Menaces</a>
+      <a href="#guides">Guides</a>
+      <a href="#support">Support</a>
+      <a href="#">À propos</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="Changer de thème">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+      </button>
+      <span id="navLoggedOut">
+        <button class="btn-login-link" onclick="openModal('login')">Connexion</button>
+        <button class="btn-primary" onclick="openModal('register')">Créer un compte</button>
+      </span>
+      <span id="navLoggedIn" style="display:none; align-items:center; gap:18px;">
+        <a href="/support" class="btn-login-link" style="text-decoration:none;">Support</a>
+        <a href="/admin" id="navAdminLink" class="btn-login-link" style="display:none; text-decoration:none;">Admin</a>
+        <span class="mono" id="navUsername" style="font-size:0.85rem; color:var(--text-dim);"></span>
+        <button class="btn-primary" onclick="doLogout()">Déconnexion</button>
+      </span>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-tag"><span class="dot"></span> Base de connaissances mise à jour en continu</div>
+    <h1>Comprendre les menaces avant qu'elles ne vous atteignent.</h1>
+    <p class="lead">Vectis explique le phishing, les rançongiciels et le vol d'identité en langage clair — avec des gestes concrets pour s'en protéger, et un support par ticket si vous êtes déjà touché.</p>
+    <div class="hero-actions">
+      <button class="btn-primary btn-lg" onclick="openModal('register')">Créer un compte gratuit</button>
+      <a href="#menaces"><button class="btn-ghost btn-lg">Voir les menaces actives</button></a>
+    </div>
+
+    <div class="ticker">
+      <div class="ticker-head">
+        <span class="label">// flux_menaces_recentes</span>
+        <span class="label">3 signalements actifs</span>
+      </div>
+      <div class="ticker-row">
+        <span class="sev high">élevé</span>
+        <span>Campagne de phishing imitant un service de livraison colis</span>
+        <span class="target">Grand public</span>
+        <span class="time">il y a 2h</span>
+      </div>
+      <div class="ticker-row">
+        <span class="sev med">moyen</span>
+        <span>Fausse mise à jour de navigateur diffusant un cheval de Troie</span>
+        <span class="target">Windows</span>
+        <span class="time">il y a 6h</span>
+      </div>
+      <div class="ticker-row">
+        <span class="sev low">faible</span>
+        <span>Extension de navigateur collectant des données de formulaire</span>
+        <span class="target">Chrome</span>
+        <span class="time">il y a 1j</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="menaces">
+    <div class="section-head">
+      <h2>Les menaces les plus courantes, expliquées</h2>
+      <p>Pas de jargon inutile. Chaque fiche dit ce que c'est, comment ça arrive, et ce qu'il faut faire.</p>
+    </div>
+    <div class="threat-grid">
+
+      <div class="threat-card" data-threat="phishing" onclick="openDetail('phishing')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="0"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+        <h3>Hameçonnage (phishing)</h3>
+        <p>Un message imite une entreprise connue pour vous pousser à cliquer et saisir vos identifiants sur un faux site.</p>
+        <div class="protect"><b>Comment se protéger</b>Vérifiez l'adresse exacte de l'expéditeur, jamais le nom affiché. Ne cliquez pas : tapez l'adresse du site vous-même.</div>
+      </div>
+
+      <div class="threat-card" data-threat="ransomware" onclick="openDetail('ransomware')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="0"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        </div>
+        <h3>Rançongiciel</h3>
+        <p>Un logiciel chiffre vos fichiers et exige un paiement pour les débloquer, souvent après ouverture d'une pièce jointe piégée.</p>
+        <div class="protect"><b>Comment se protéger</b>Sauvegardez régulièrement hors ligne. N'ouvrez pas les pièces jointes non attendues, même d'un contact connu.</div>
+      </div>
+
+      <div class="threat-card" data-threat="identite" onclick="openDetail('identite')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <h3>Usurpation d'identité</h3>
+        <p>Vos données personnelles fuitées sont utilisées pour ouvrir des comptes ou contracter des services en votre nom.</p>
+        <div class="protect"><b>Comment se protéger</b>Activez la double authentification partout. Surveillez vos relevés bancaires chaque mois.</div>
+      </div>
+
+      <div class="threat-card" data-threat="motsdepasse" onclick="openDetail('motsdepasse')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z"/></svg>
+        </div>
+        <h3>Mots de passe réutilisés</h3>
+        <p>Une seule fuite de données suffit à compromettre tous vos comptes si vous utilisez le même mot de passe partout.</p>
+        <div class="protect"><b>Comment se protéger</b>Utilisez un gestionnaire de mots de passe. Un mot de passe unique et long par service.</div>
+      </div>
+
+      <div class="threat-card" data-threat="wifi" onclick="openDetail('wifi')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <h3>Réseaux Wi-Fi publics</h3>
+        <p>Sur un Wi-Fi ouvert, vos échanges non chiffrés peuvent être interceptés par toute personne connectée au même réseau.</p>
+        <div class="protect"><b>Comment se protéger</b>Évitez les connexions sensibles sur Wi-Fi public, ou utilisez un VPN de confiance.</div>
+      </div>
+
+      <div class="threat-card" data-threat="ingenierie" onclick="openDetail('ingenierie')">
+        <div class="threat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v6M12 21v-6M3 12h6M21 12h-6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
+        <h3>Ingénierie sociale</h3>
+        <p>Un attaquant se fait passer pour un collègue, un technicien ou un proche pour obtenir une information ou un accès.</p>
+        <div class="protect"><b>Comment se protéger</b>Vérifiez toute demande urgente ou inhabituelle par un second canal avant d'agir.</div>
+      </div>
+
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat-cell"><div class="num">83%</div><div class="lbl">des intrusions commencent par un e-mail</div></div>
+      <div class="stat-cell"><div class="num">6</div><div class="lbl">mois en moyenne avant détection d'une fuite</div></div>
+      <div class="stat-cell"><div class="num">×3</div><div class="lbl">le risque avec un mot de passe réutilisé</div></div>
+      <div class="stat-cell"><div class="num">2FA</div><div class="lbl">bloque la grande majorité des prises de contrôle</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="guides">
+    <div class="section-head">
+      <h2>Guides pratiques</h2>
+      <p>Des marches à suivre concrètes, pas de généralités.</p>
+    </div>
+    <div class="guide-list">
+      <div class="guide-item">
+        <span class="idx">01</span>
+        <div class="content"><h4>Configurer la double authentification</h4><p>Application d'authentification plutôt que SMS, sur vos comptes principaux.</p></div>
+        <span class="arrow">→</span>
+      </div>
+      <div class="guide-item">
+        <span class="idx">02</span>
+        <div class="content"><h4>Repérer un e-mail de phishing en 10 secondes</h4><p>Les cinq signes qui ne trompent pas, avec des exemples réels.</p></div>
+        <span class="arrow">→</span>
+      </div>
+      <div class="guide-item">
+        <span class="idx">03</span>
+        <div class="content"><h4>Que faire dans l'heure suivant une fuite de données</h4><p>Ordre des actions : mot de passe, sessions, cartes bancaires.</p></div>
+        <span class="arrow">→</span>
+      </div>
+      <div class="guide-item">
+        <span class="idx">04</span>
+        <div class="content"><h4>Choisir et utiliser un gestionnaire de mots de passe</h4><p>Comparatif simple et étapes de migration depuis votre navigateur.</p></div>
+        <span class="arrow">→</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="support">
+    <div class="section-head">
+      <h2>Besoin d'aide concrète ?</h2>
+      <p>Ouvrez un ticket avec notre équipe. Un modérateur vous répond en privé.</p>
+    </div>
+    <button class="btn-primary btn-lg" onclick="openModal('login')">Accéder au support par ticket</button>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span>© 2026 Vectis — Démo visuelle, contenu à titre pédagogique</span>
+    <span style="display:flex; gap:20px; align-items:center;">
+      <a href="#privacy" onclick="openDetail('privacy'); return false;" style="color:var(--text-faint); transition:color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-faint)'">Politique de confidentialité</a>
+      <span class="mono">v0.1-demo</span>
+    </span>
+  </div>
+</footer>
+
+<!-- ===== Detail pages ===== -->
+
+<div class="detail-page" id="detail-phishing">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / phishing</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow high">Menace active — fréquence élevée</div>
+    <h1>Hameçonnage (phishing)</h1>
+    <p class="detail-intro">Le phishing est une technique où un attaquant se fait passer pour un tiers de confiance — banque, administration, service de livraison, collègue — dans le but de vous faire cliquer sur un lien piégé ou saisir vos identifiants sur un faux site. C'est, de très loin, le point d'entrée le plus utilisé dans les cyberattaques actuelles.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>Vous recevez un e-mail ou un SMS qui imite parfaitement la charte graphique d'un organisme connu. Le message crée une urgence : "votre colis est bloqué", "votre compte va être suspendu", "facture impayée". Le lien mène vers une copie quasi identique du vrai site, où vos identifiants sont directement récupérés par l'attaquant.</p>
+      <p>Une variante appelée "spear phishing" cible une personne précise avec des informations personnalisées (nom du patron, projet en cours) pour paraître plus crédible — souvent utilisée contre des employés ayant accès à des comptes financiers.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Fraude au faux fournisseur — Groupe Pathé (France)</div>
+        <div class="case-year">2018</div>
+        <p>Deux dirigeants de Pathé aux Pays-Bas ont viré près de 19 millions d'euros après avoir reçu des e-mails frauduleux imitant leur direction générale, une variante du phishing ciblé ("fraude au président").</p>
+      </div>
+      <div class="case-box">
+        <div class="case-title">Campagne de phishing Microsoft 365 à grande échelle</div>
+        <div class="case-year">2023-2024</div>
+        <p>Des vagues massives de faux e-mails imitant Microsoft ont ciblé des entreprises pour voler des identifiants professionnels, documentées à plusieurs reprises par l'ANSSI dans ses bulletins d'alerte.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Au-delà du vol immédiat d'identifiants : accès à votre messagerie (souvent utilisée pour réinitialiser d'autres mots de passe), fraude bancaire, usurpation d'identité complète, ou point d'entrée pour déployer un rançongiciel dans une entreprise.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Vérifiez l'adresse d'expéditeur complète</b><span>Pas le nom affiché — l'adresse e-mail réelle après le symbole @. Une seule lettre différente suffit à démasquer une fausse adresse.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>Ne cliquez jamais depuis le message</b><span>Ouvrez un nouvel onglet et tapez vous-même l'adresse officielle du site concerné.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Méfiez-vous de l'urgence</b><span>Les messages qui imposent d'agir "immédiatement" sont un signal d'alarme classique.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">4</span>
+          <div class="step-text"><b>Activez la double authentification</b><span>Même si vos identifiants sont volés, l'attaquant ne pourra pas se connecter sans le second facteur.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/hameconnage-phishing" target="_blank" rel="noopener">
+          <span><span class="src-name">Fiche réflexe hameçonnage</span><br><span class="src-org">cybermalveillance.gouv.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.signal-spam.fr" target="_blank" rel="noopener">
+          <span><span class="src-name">Signaler un e-mail frauduleux</span><br><span class="src-org">signal-spam.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.cnil.fr/fr/phishing-hameconnage" target="_blank" rel="noopener">
+          <span><span class="src-name">Comprendre le phishing</span><br><span class="src-org">cnil.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-ransomware">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / rançongiciel</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow high">Menace active — impact élevé</div>
+    <h1>Rançongiciel (ransomware)</h1>
+    <p class="detail-intro">Un rançongiciel est un logiciel malveillant qui chiffre l'ensemble des fichiers d'un ordinateur ou d'un réseau, les rendant inaccessibles, puis exige le paiement d'une rançon — généralement en cryptomonnaie — pour fournir la clé de déchiffrement. Aucun paiement ne garantit la récupération des données.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>L'infection démarre le plus souvent par une pièce jointe piégée (facture, CV, document Office avec macro), un lien de phishing, ou l'exploitation d'un service distant mal sécurisé (RDP exposé sur internet). Une fois exécuté, le logiciel chiffre silencieusement les fichiers puis affiche une note de rançon.</p>
+      <p>En entreprise, l'attaque se propage souvent latéralement sur le réseau avant le chiffrement, avec en plus un vol de données préalable ("double extorsion") : payer n'empêche pas la publication des données volées.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Hôpitaux français touchés en série</div>
+        <div class="case-year">2022</div>
+        <p>Plusieurs centres hospitaliers français (Corbeil-Essonnes notamment) ont subi des attaques par rançongiciel ayant paralysé les systèmes informatiques et menacé la publication de données médicales de patients.</p>
+      </div>
+      <div class="case-box">
+        <div class="case-title">Colonial Pipeline (États-Unis)</div>
+        <div class="case-year">2021</div>
+        <p>Une attaque par rançongiciel a paralysé le plus grand oléoduc de carburant des États-Unis, provoquant des pénuries dans plusieurs États et le paiement d'une rançon de 4,4 millions de dollars.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Perte définitive de données si aucune sauvegarde n'existe, interruption complète d'activité (parfois plusieurs semaines), coût de remédiation souvent supérieur à la rançon elle-même, et fuite de données sensibles même en cas de paiement.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Sauvegardez régulièrement, hors ligne</b><span>Une copie déconnectée du réseau (disque externe débranché après usage) est la seule protection réellement efficace contre le chiffrement.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>N'activez jamais les macros d'un document reçu par e-mail</b><span>C'est l'un des vecteurs d'infection les plus courants en entreprise.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Maintenez vos systèmes à jour</b><span>La majorité des attaques exploitent des failles déjà corrigées par un correctif disponible.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">4</span>
+          <div class="step-text"><b>Ne payez jamais sans avis d'un professionnel</b><span>Contactez immédiatement un expert en réponse à incident — le paiement finance les groupes criminels sans garantie de récupération.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/rancongiciels" target="_blank" rel="noopener">
+          <span><span class="src-name">Fiche réflexe rançongiciel</span><br><span class="src-org">cybermalveillance.gouv.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.cert.ssi.gouv.fr" target="_blank" rel="noopener">
+          <span><span class="src-name">Bulletins d'alerte officiels</span><br><span class="src-org">CERT-FR / ANSSI</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-identite">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / usurpation</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow med">Menace active — impact durable</div>
+    <h1>Usurpation d'identité</h1>
+    <p class="detail-intro">L'usurpation d'identité consiste à utiliser vos données personnelles — nom, adresse, numéro de sécurité sociale, copie de pièce d'identité — pour agir en votre nom : ouvrir un compte, souscrire un crédit, ou commettre une fraude. Elle découle presque toujours d'une fuite de données antérieure.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>Vos données circulent après une fuite chez un service que vous utilisez, un phishing réussi, ou simplement des informations publiques rassemblées depuis vos réseaux sociaux. Ces données sont ensuite revendues ou utilisées directement pour ouvrir des comptes bancaires, souscrire des crédits à la consommation, ou usurper votre identité administrative.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Fuite de données France Travail (ex-Pôle emploi)</div>
+        <div class="case-year">2024</div>
+        <p>Une fuite a exposé les données personnelles de près de 43 millions de personnes inscrites, incluant état civil et numéro de sécurité sociale — un terrain propice à l'usurpation d'identité à grande échelle.</p>
+      </div>
+      <div class="case-box">
+        <div class="case-title">Fuites cumulées chez des mutuelles et assureurs santé</div>
+        <div class="case-year">2024</div>
+        <p>Plusieurs organismes complémentaires santé français ont signalé des fuites de données de plusieurs millions d'assurés, exploitables pour des usurpations ciblées.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Crédits souscrits à votre nom sans que vous le sachiez avant réception d'une relance, comptes bancaires ouverts pour blanchiment, dossier administratif compromis, et un parcours souvent long pour rétablir votre identité auprès des organismes concernés.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Activez la double authentification partout où c'est possible</b><span>Sur vos comptes bancaires, e-mail et administratifs en priorité.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>Surveillez vos relevés bancaires chaque mois</b><span>Un prélèvement inconnu, même minime, doit être signalé immédiatement à votre banque.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Limitez les informations personnelles publiques</b><span>Date de naissance complète, adresse, numéro de téléphone visibles sur les réseaux sociaux facilitent l'usurpation.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">4</span>
+          <div class="step-text"><b>En cas de suspicion, déposez plainte rapidement</b><span>Un dépôt de plainte officiel est souvent nécessaire pour contester des dettes ou contrats frauduleux.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/usurpation-didentite" target="_blank" rel="noopener">
+          <span><span class="src-name">Fiche réflexe usurpation d'identité</span><br><span class="src-org">cybermalveillance.gouv.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.service-public.fr/particuliers/vosdroits/F32043" target="_blank" rel="noopener">
+          <span><span class="src-name">Démarches en cas d'usurpation</span><br><span class="src-org">service-public.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-motsdepasse">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / mots de passe</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow med">Menace passive — vulnérabilité fréquente</div>
+    <h1>Mots de passe réutilisés</h1>
+    <p class="detail-intro">Réutiliser le même mot de passe sur plusieurs services signifie qu'une seule fuite de données suffit à compromettre tous vos comptes simultanément. C'est la technique appelée "credential stuffing" : des identifiants volés sur un site sont testés automatiquement sur des centaines d'autres.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>Un service que vous utilisez subit une fuite de données. Les identifiants (e-mail + mot de passe) circulent ensuite sur des bases piratées. Des attaquants automatisent des tentatives de connexion avec ces mêmes identifiants sur des centaines d'autres sites — banques, réseaux sociaux, messageries — en pariant que vous avez réutilisé le mot de passe.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Fuite Collection #1</div>
+        <div class="case-year">2019</div>
+        <p>Une base de plus de 770 millions d'adresses e-mail et mots de passe compilée à partir de fuites multiples a circulé publiquement, alimentant des vagues massives de credential stuffing pendant des années.</p>
+      </div>
+      <div class="case-box">
+        <div class="case-title">Fuite LinkedIn</div>
+        <div class="case-year">2012 (révélée en 2016)</div>
+        <p>167 millions de comptes LinkedIn compromis ont été mis en vente, beaucoup de victimes ayant réutilisé ce même mot de passe sur d'autres services bien après la fuite initiale.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Effet domino : la compromission d'un seul service peu sensible (un forum, par exemple) peut donner accès à votre messagerie, puis à tous les comptes liés à cette adresse e-mail via la fonction "mot de passe oublié".</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Utilisez un gestionnaire de mots de passe</b><span>Il génère et retient un mot de passe unique et complexe pour chaque service, vous n'avez à retenir qu'un seul mot de passe maître.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>Vérifiez si vos identifiants ont déjà fuité</b><span>Des services indépendants permettent de vérifier si votre adresse e-mail apparaît dans des fuites connues.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Privilégiez la longueur à la complexité</b><span>Une phrase longue est souvent plus sûre et plus facile à retenir qu'un mot court avec des caractères spéciaux.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://haveibeenpwned.com" target="_blank" rel="noopener">
+          <span><span class="src-name">Vérifier si votre e-mail a fuité</span><br><span class="src-org">haveibeenpwned.com</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.cnil.fr/fr/authentification-choisir-un-mot-de-passe-solide" target="_blank" rel="noopener">
+          <span><span class="src-name">Choisir un mot de passe solide</span><br><span class="src-org">cnil.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-wifi">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / wifi public</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow med">Menace de proximité — impact ciblé</div>
+    <h1>Réseaux Wi-Fi publics</h1>
+    <p class="detail-intro">Sur un réseau Wi-Fi ouvert (café, aéroport, hôtel), les échanges non chiffrés entre votre appareil et internet peuvent être interceptés par toute personne connectée au même réseau, via une attaque dite "de l'homme du milieu".</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>Un attaquant se positionne sur le même réseau Wi-Fi et intercepte le trafic circulant entre votre appareil et les sites que vous visitez. Sur les sites non sécurisés (sans HTTPS), il peut lire les données en clair. Une variante consiste à créer un faux point d'accès portant un nom crédible ("Wifi_Aeroport_Gratuit") pour capter directement les connexions.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Faux points d'accès dans les aéroports</div>
+        <div class="case-year">Signalements récurrents</div>
+        <p>Des faux réseaux Wi-Fi imitant les points d'accès officiels d'aéroports et de gares ont été documentés à plusieurs reprises par des agences de cybersécurité européennes, utilisés pour intercepter des identifiants de connexion.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Interception d'identifiants de connexion sur des sites non sécurisés, détournement vers de faux sites (DNS spoofing), et dans certains cas installation de logiciels malveillants via des vulnérabilités du réseau lui-même.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Évitez les opérations sensibles sur Wi-Fi public</b><span>Banque en ligne, achats, connexion à des comptes professionnels : à réserver à un réseau de confiance.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>Utilisez un VPN de confiance</b><span>Il chiffre l'intégralité de votre trafic, rendant l'interception inutile même sur un réseau compromis.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Vérifiez le nom exact du réseau auprès du personnel</b><span>Les faux points d'accès imitent des noms plausibles mais rarement exacts.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/wifi-public" target="_blank" rel="noopener">
+          <span><span class="src-name">Fiche réflexe Wi-Fi public</span><br><span class="src-org">cybermalveillance.gouv.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-ingenierie">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">menaces / ingénierie sociale</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow high">Menace active — technique en hausse</div>
+    <h1>Ingénierie sociale</h1>
+    <p class="detail-intro">L'ingénierie sociale consiste à manipuler psychologiquement une personne pour obtenir une information confidentielle ou un accès, sans avoir besoin de faille technique. L'attaquant se fait passer pour un collègue, un technicien informatique, un livreur ou un proche.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Comment ça se produit concrètement</h2>
+      <p>Par téléphone, un faux technicien demande un accès distant pour "résoudre un problème urgent". Par e-mail ou messagerie, un faux collègue ou dirigeant demande un virement urgent ou des identifiants. En personne, un individu se fait passer pour un prestataire pour accéder à des locaux ou du matériel.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Cas documentés</h2>
+      <div class="case-box">
+        <div class="case-title">Attaque MGM Resorts</div>
+        <div class="case-year">2023</div>
+        <p>Le groupe hôtelier MGM Resorts a subi une intrusion majeure après qu'un attaquant a simplement appelé le support informatique en se faisant passer pour un employé, obtenant la réinitialisation d'un accès — sans exploiter aucune faille technique.</p>
+      </div>
+      <div class="case-box">
+        <div class="case-title">Fraude au faux support technique</div>
+        <div class="case-year">Signalements continus</div>
+        <p>Des campagnes répétées de faux appels se présentant comme le support Microsoft ou d'opérateurs télécoms poussent les victimes à installer des logiciels de prise de contrôle à distance.</p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Les risques réels</h2>
+      <p>Accès direct à des systèmes sensibles sans laisser de trace technique évidente, virements frauduleux, et compromission complète de réseaux d'entreprise malgré des protections techniques solides — l'humain reste le maillon le plus ciblé.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Comment se protéger</h2>
+      <div class="protect-steps">
+        <div class="protect-step">
+          <span class="step-num">1</span>
+          <div class="step-text"><b>Vérifiez par un second canal</b><span>Toute demande urgente et inhabituelle (virement, accès, mot de passe) doit être confirmée par un appel direct au numéro officiel connu, pas celui fourni par le demandeur.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">2</span>
+          <div class="step-text"><b>Aucun support légitime ne demande votre mot de passe</b><span>Ni par téléphone, ni par e-mail — c'est un signal d'alerte absolu.</span></div>
+        </div>
+        <div class="protect-step">
+          <span class="step-num">3</span>
+          <div class="step-text"><b>Ralentissez face à l'urgence</b><span>La pression temporelle est l'outil numéro un de l'ingénierie sociale ; prendre le temps de vérifier déjoue la majorité des tentatives.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Sources fiables</h2>
+      <div class="sources-box">
+        <h3>Pour vérifier, signaler ou approfondir</h3>
+        <a class="source-link" href="https://www.cybermalveillance.gouv.fr/tous-nos-contenus/fiches-reflexes/ingenierie-sociale" target="_blank" rel="noopener">
+          <span><span class="src-name">Fiche réflexe ingénierie sociale</span><br><span class="src-org">cybermalveillance.gouv.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-page" id="detail-privacy">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Retour
+    </button>
+    <span class="breadcrumb">légal / confidentialité</span>
+  </div>
+  <div class="detail-body">
+    <div class="detail-eyebrow med">Document légal — dernière mise à jour : septembre 2026</div>
+    <h1>Politique de confidentialité</h1>
+    <p class="detail-intro">Cette page décrit précisément quelles données Vectis collecte, pourquoi, combien de temps elles sont conservées, et comment les faire supprimer. Elle s'applique à tout compte créé sur la plateforme.</p>
+
+    <div class="detail-section">
+      <h2><span class="num">01</span> Responsable du traitement</h2>
+      <p>Vectis est éditeur et responsable du traitement des données personnelles collectées via ce site, au sens du Règlement Général sur la Protection des Données (RGPD — règlement UE 2016/679) et de la loi Informatique et Libertés. Toute question relative à vos données peut être adressée via un ticket de support catégorie "Confidentialité / RGPD".</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">02</span> Données collectées à la création d'un compte</h2>
+      <p>Lors de l'inscription, Vectis collecte : votre nom d'utilisateur, votre adresse e-mail, et un mot de passe stocké uniquement sous forme hachée (jamais en clair). Aucune autre information n'est demandée à la création du compte.</p>
+      <p>Si vous ouvrez un ticket de support, le contenu de vos messages est conservé pour assurer le suivi de la conversation avec l'équipe ou les modérateurs.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">03</span> Finalité et base légale du traitement</h2>
+      <p>Vos données sont utilisées exclusivement pour : créer et sécuriser votre compte, vous permettre de vous connecter, vérifier votre adresse e-mail, et traiter vos demandes de support. Aucune donnée n'est utilisée à des fins publicitaires ni transmise à des tiers commerciaux.</p>
+      <p>La base légale de ce traitement est l'exécution du contrat qui vous lie à Vectis dès la création de votre compte (article 6.1.b du RGPD), ainsi que votre consentement explicite recueilli lors de l'inscription.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">04</span> Durée de conservation</h2>
+      <p>Vos données sont conservées tant que votre compte reste actif. En cas de suppression du compte, qu'elle soit initiée par vous ou par un modérateur dans le cadre de la modération, l'ensemble de vos données personnelles (identifiants, contenu des tickets) est conservé sur nos serveurs pendant une durée de <b style="color:var(--text)">6 mois</b> après la date de suppression effective, à des fins de preuve en cas de litige, de lutte contre la fraude, et de conformité aux obligations légales de conservation.</p>
+      <p>Passé ce délai de 6 mois, l'ensemble des données est supprimé de manière définitive et irréversible de nos systèmes, y compris de nos sauvegardes.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">05</span> Communications après suppression du compte</h2>
+      <p><b style="color:var(--text)">Aucun e-mail ne vous sera envoyé</b> une fois votre compte supprimé — ni confirmation différée, ni relance, ni communication marketing. La suppression est immédiate sur l'accès au compte ; seule la donnée elle-même reste stockée de façon inactive pendant la période mentionnée à l'article 4, sans aucune utilisation ni traitement actif de notre part.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">06</span> Partage des données</h2>
+      <p>Vos données ne sont ni vendues, ni louées, ni partagées avec des tiers à des fins commerciales. Elles peuvent être communiquées aux autorités compétentes uniquement si la loi l'exige (réquisition judiciaire).</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">07</span> Sécurité des données</h2>
+      <p>Les mots de passe sont stockés sous forme hachée avec un algorithme résistant (jamais en texte brut). Les communications entre votre navigateur et nos serveurs sont chiffrées. L'accès aux données par notre équipe est strictement limité aux personnes en ayant besoin dans le cadre de la modération ou du support.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">08</span> Vos droits</h2>
+      <p>Conformément au RGPD, vous disposez à tout moment d'un droit d'accès, de rectification, d'effacement, de limitation du traitement, et de portabilité de vos données. Vous pouvez également retirer votre consentement à tout moment, ce qui entraîne la suppression de votre compte selon les modalités de l'article 4.</p>
+      <p>Pour exercer ces droits, ouvrez un ticket de support catégorie "Confidentialité / RGPD" depuis votre compte, ou contactez le responsable du traitement par le canal indiqué à l'article 1. Une réponse vous sera apportée dans un délai maximal d'un mois, conformément à la réglementation.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">09</span> Cookies et traceurs</h2>
+      <p>Vectis utilise uniquement des cookies strictement nécessaires au fonctionnement du site (maintien de votre session de connexion). Aucun cookie publicitaire ou de traçage tiers n'est déposé sans votre consentement explicite préalable.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">10</span> Réclamation auprès de l'autorité de contrôle</h2>
+      <p>Si vous estimez que vos droits ne sont pas respectés après nous avoir contactés, vous pouvez introduire une réclamation auprès de la Commission Nationale de l'Informatique et des Libertés (CNIL), autorité française de contrôle en matière de protection des données.</p>
+    </div>
+
+    <div class="detail-section">
+      <h2><span class="num">11</span> Sources et références</h2>
+      <div class="sources-box">
+        <h3>Cadre légal applicable</h3>
+        <a class="source-link" href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees" target="_blank" rel="noopener">
+          <span><span class="src-name">Texte du RGPD expliqué</span><br><span class="src-org">cnil.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+        <a class="source-link" href="https://www.cnil.fr/fr/les-droits-pour-maitriser-vos-donnees-personnelles" target="_blank" rel="noopener">
+          <span><span class="src-name">Vos droits sur vos données</span><br><span class="src-org">cnil.fr</span></span>
+          <span class="src-arrow">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <p style="font-size:0.78rem; color:var(--text-faint); border-top:1px solid var(--border); padding-top:20px;">Ce document est une base structurée à valider par un professionnel du droit avant toute mise en production, afin de garantir sa pleine conformité à votre situation réelle et à l'évolution de la réglementation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal login/register/forgot -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div class="modal-tabs" id="modalTabs">
+      <div class="modal-tab" data-tab="login" onclick="switchTab('login')">Connexion</div>
+      <div class="modal-tab" data-tab="register" onclick="switchTab('register')">Créer un compte</div>
+    </div>
+
+    <div class="form-view" id="view-login">
+      <div class="field"><label>E-mail ou nom d'utilisateur</label><input type="text" id="loginIdentifier" placeholder="vous@exemple.com"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+      <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" id="turnstileLogin" style="margin-bottom:4px;"></div>
+      <div class="form-error" id="loginError"></div>
+      <button class="modal-submit" id="loginSubmitBtn" onclick="doLogin()">Se connecter</button>
+      <div class="forgot-link" onclick="switchTab('forgot')">Mot de passe oublié ?</div>
+    </div>
+
+    <div class="form-view" id="view-register">
+      <div class="field"><label>Nom d'utilisateur</label><input type="text" id="regUsername" placeholder="jdupont"></div>
+      <div class="field"><label>Adresse e-mail</label><input type="email" id="regEmail" placeholder="vous@exemple.com"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="regPassword" placeholder="8 caractères minimum"></div>
+      <div class="consent-row">
+        <input type="checkbox" id="consentCheck">
+        <label for="consentCheck">J'ai lu et j'accepte la <a href="#privacy" onclick="event.stopPropagation(); openDetail('privacy'); return false;">politique de confidentialité</a>.</label>
+      </div>
+      <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" id="turnstileRegister" style="margin-bottom:4px;"></div>
+      <div class="form-error" id="registerError"></div>
+      <div class="form-success" id="registerSuccess"></div>
+      <button class="modal-submit" id="registerSubmitBtn" onclick="doRegister()">Créer mon compte</button>
+      <div class="modal-note">Un e-mail de vérification sera envoyé avant activation du compte.</div>
+    </div>
+
+    <div class="form-view" id="view-forgot">
+      <div class="field"><label>Adresse e-mail associée</label><input type="email" id="forgotEmail" placeholder="vous@exemple.com"></div>
+      <div class="form-success" id="forgotSuccess"></div>
+      <button class="modal-submit" id="forgotSubmitBtn" onclick="doForgotPassword()">Envoyer le lien de réinitialisation</button>
+      <div class="forgot-link" onclick="switchTab('login')">← Retour à la connexion</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('vectis-theme', next);
+}
+
+function openModal(tab) {
+  document.getElementById('modalOverlay').classList.add('active');
+  clearFormErrors();
+  switchTab(tab);
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+function switchTab(tab) {
+  clearFormErrors();
+  document.querySelectorAll('.form-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  if (tab === 'login' || tab === 'register') {
+    document.querySelector('.modal-tab[data-tab="' + tab + '"]').classList.add('active');
+    document.getElementById('modalTabs').style.display = 'flex';
+  } else {
+    document.getElementById('modalTabs').style.display = 'none';
+  }
+}
+function clearFormErrors() {
+  document.querySelectorAll('.form-error, .form-success').forEach(el => {
+    el.classList.remove('active');
+    el.textContent = '';
+  });
+}
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+switchTab('login');
+
+/* ===== Detail page navigation (works with back gesture / back button on mobile & desktop) ===== */
+function openDetail(id) {
+  document.querySelectorAll('.detail-page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('detail-' + id);
+  if (!page) return;
+  page.classList.add('active');
+  page.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  history.pushState({ detail: id }, '', '#' + id);
+}
+
+function closeDetail() {
+  document.querySelectorAll('.detail-page').forEach(p => p.classList.remove('active'));
+  document.body.style.overflow = '';
+  if (location.hash) {
+    history.pushState({}, '', location.pathname);
+  }
+}
+
+window.addEventListener('popstate', (e) => {
+  if (e.state && e.state.detail) {
+    document.querySelectorAll('.detail-page').forEach(p => p.classList.remove('active'));
+    document.getElementById('detail-' + e.state.detail).classList.add('active');
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.querySelectorAll('.detail-page').forEach(p => p.classList.remove('active'));
+    document.body.style.overflow = '';
+  }
+});
+
+/* ===== Auth: connects to real Flask API ===== */
+
+async function doRegister() {
+  clearFormErrors();
+  const btn = document.getElementById('registerSubmitBtn');
+  const consentBox = document.getElementById('consentCheck');
+  const errBox = document.getElementById('registerError');
+  const okBox = document.getElementById('registerSuccess');
+
+  if (!consentBox.checked) {
+    consentBox.parentElement.style.animation = 'shake 0.3s ease';
+    setTimeout(() => consentBox.parentElement.style.animation = '', 300);
+    errBox.textContent = "Vous devez accepter la politique de confidentialité.";
+    errBox.classList.add('active');
+    return;
+  }
+
+  const payload = {
+    username: document.getElementById('regUsername').value.trim(),
+    email: document.getElementById('regEmail').value.trim(),
+    password: document.getElementById('regPassword').value,
+    consent: true,
+    turnstile_token: (window.turnstile && document.getElementById('turnstileRegister')) ?
+      turnstile.getResponse('turnstileRegister') : '',
+  };
+
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errBox.textContent = data.error || "Une erreur est survenue.";
+      errBox.classList.add('active');
+      if (window.turnstile) turnstile.reset('turnstileRegister');
+    } else {
+      okBox.textContent = data.warning || data.message;
+      okBox.classList.add('active');
+    }
+  } catch (e) {
+    errBox.textContent = "Impossible de contacter le serveur.";
+    errBox.classList.add('active');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doLogin() {
+  clearFormErrors();
+  const btn = document.getElementById('loginSubmitBtn');
+  const errBox = document.getElementById('loginError');
+
+  const payload = {
+    identifier: document.getElementById('loginIdentifier').value.trim(),
+    password: document.getElementById('loginPassword').value,
+    turnstile_token: (window.turnstile && document.getElementById('turnstileLogin')) ?
+      turnstile.getResponse('turnstileLogin') : '',
+  };
+
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errBox.textContent = data.error || "Une erreur est survenue.";
+      errBox.classList.add('active');
+      if (window.turnstile) turnstile.reset('turnstileLogin');
+    } else {
+      closeModal();
+      updateNavState();
+    }
+  } catch (e) {
+    errBox.textContent = "Impossible de contacter le serveur.";
+    errBox.classList.add('active');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doForgotPassword() {
+  clearFormErrors();
+  const btn = document.getElementById('forgotSubmitBtn');
+  const okBox = document.getElementById('forgotSuccess');
+
+  const payload = { email: document.getElementById('forgotEmail').value.trim() };
+
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    okBox.textContent = data.message;
+    okBox.classList.add('active');
+  } catch (e) {
+    okBox.textContent = "Impossible de contacter le serveur.";
+    okBox.classList.add('active');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doLogout() {
+  try {
+    await fetch('/api/logout', { method: 'POST' });
+  } catch (e) {}
+  updateNavState();
+  window.location.href = '/';
+}
+
+async function updateNavState() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    const loggedOut = document.getElementById('navLoggedOut');
+    const loggedIn = document.getElementById('navLoggedIn');
+    const adminLink = document.getElementById('navAdminLink');
+    const usernameSpan = document.getElementById('navUsername');
+
+    if (data.authenticated) {
+      loggedOut.style.display = 'none';
+      loggedIn.style.display = 'flex';
+      usernameSpan.textContent = '@' + data.username;
+      adminLink.style.display = (data.role === 'admin') ? 'inline' : 'none';
+    } else {
+      loggedOut.style.display = 'inline';
+      loggedIn.style.display = 'none';
+    }
+  } catch (e) {}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('vectis-theme');
+  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+  const hash = location.hash.replace('#', '');
+  if (hash && document.getElementById('detail-' + hash)) {
+    openDetail(hash);
+  }
+
+  updateNavState();
+});
+</script>
+</body>
+</html>
